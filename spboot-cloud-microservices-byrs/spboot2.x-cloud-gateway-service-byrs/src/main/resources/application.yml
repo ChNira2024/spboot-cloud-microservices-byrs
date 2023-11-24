@@ -1,0 +1,18 @@
+
+spring:
+  application:
+    name: GATEWAY-SERVICE
+  config:
+     import: optional:configserver:http://localhost:8888
+  cloud:
+    gateway:
+      routes:
+      - id: cart-service
+        uri: lb://CART-SERVICE
+        predicates:
+        - Path=/cart/**
+        
+      - id: order-service
+        uri: lb://ORDER-SERVICE
+        predicates:
+        - Path=/order/**

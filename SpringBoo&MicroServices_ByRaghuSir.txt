@@ -1,0 +1,832 @@
+81-21-SBMS-10-Dec-2022(Redis Cache)::-
+***************************************
+Problem:-
+--------
+If no.of Network calls between Server(App) and database are increased then that results application perfomance down.which take more time to execute all Network call.
+
+Cache::-
+-------
+It is a process of storing data at server side to reduce number of network calls for commonly accessed data or repeatedly accessed data.
+Ex:search electronics,mobile,fashion in Flipkart,Email inbox etc..
+=>Cache exist in server side..
+=>Cache is a also one type of database..
+=>Cache reduce network calls from 100% to 80%..etc
+=>Cache can store any type of objects(products,Inbox ...etc)
+Cache is handled  by operation(getOne/updateOne/deleteOne) i.e Cache and DB must be Sync.
+=>Cache should never be used to store all db data(don't use for findAll() and save() operation)
+
+**Redis Cache::-
+----------------
+=>Redis is a open source vendor which provides Cache concept integrated with Spring Boot.
+=>To use Redis Cache concept in Spring Boot use below dependency:
+<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-redis</artifactId>
+</dependency>
+
+=>Also we need to run Redis Server(local or cloud)..Download Redis from below link and extract..
+https://github.com/tporadowski/redis/releases
+My local destination for Redis:Go to C:\Users\Sreenivas Bandaru\Downloads\Redis-x64-5.0.14.1 location and double-click to start redis-server.exe
+
+=>Redis  is a server which is handle Cache Concept.Now My Redis is in local machine.To connect with our spring boot application with Redis
+ we must Configure the IP address of my system and port of Redis and type of Cache in Spring Boot application.properties file.
+Type: Redis Cache
+IP:localhost
+Port:6379
+
+=>Dependency::-
+@EnableCaching:Used in Main Class for To Activate Cache Concept
+@Cacheable:This annotation used for find/get operation[find/get] also store the data in Database and also Cache
+@CachePut:This annotation used for Modify existed object in Cache[update] also Modify the data in Database and also Cache
+@CacheEvict: This annotation used for Remove existed object from Cache[remove/delete] also Delete the data in Database and also Cache
+
+=>For Every cache type we need to provide one namespace and key to put/delete/get operation..        
+=>Entity class must be Serializable because this is reading/writting object to/from network.
+
+Q)Can we implement Cache for all operations?
+Ans :only for getOneID,updateOneID,deleteOneID and not for save operation.
+
+NOTE: if u remove @EnableCaching Annotation from main class and execute the application then u will observe in console how many times u fetch those many times sql-query
+is running it means this many times application is hitting our database.
+NOTE: If u use @EnableCaching Annotation in main class and execute the application then u will observe in console how many times u fetch only times sql-query
+is running it means all the related data is in cache so that it is taking from cache , no need to hit database.
+
+Q)Can u manage the Cache timing?
+Ans Yes,if a object/data is cached,it won't be removed untll CacheEvict is called i.e by default never remove .
+we can use key "spring.cache.redis.time-to-live".So that after some time object is removed from cache(not from DB)
+Ex:spring.cache.redis.time-to-live=60000  (in application.properties)
+
+
+85-21-SBMS-10-Dec-2022(Spring Cloud)::-
+***************************************
+=>MicroService is a design/Theory,But "Spring Cloud" is a Coding
+=>AWS Cloud Computing::- Run Application by taking services for rental(Paas,Iaas,Saas)
+Ex:AWS,MS-Azure,GCP etc..
+=>Spring Cloud:Develop application using MicroServices Concept
+
+MicroService Component::-
+1)Register and Discovery Server: (Netflix Eureka server)
+Here all MicroServices Instance details are stored(serviceId,insatanceId,Host,IP,Port,Load Factor..etc)
+2)Config Server:To store all MicroServices common properties at a external place(github) to connect MicroService application.
+3)Communication Client: (RestTemplate) Open Feign or Feign Client is used to make request from one MicroService application to another MicroService application
+4)Admin Dashboard: Visual Dashboard for MicroService application which are registered with eureka(Health,Info,Beans,cache Details...etc)it internally uses Actuator
+5)ELK:Elasticsearch Logstash Kibana
+To read .log file and display at UI,so that we can search all log details in easy way
+6)Distributed Tracking:Finding execution path of a request that has multiple MicroService application(which class/method are executed,how much time taken)
+Tool:Zipkin Server, Sleuth
+7)Continious Data Flow(Message Queue):[Apache Kafka]
+Ex:Swiggy Tracking,Ola/Uber cab status..
+8)Circuit Breaker::-
+9)API Gateway:Entry-Exit point to MicroService application
+->Dynamic Routing:choose MicroService application based on Load Details
+->Load balancer:maintain Load details based on serviceId
+->Security:JWT(JSON web token),OAuth2.x
+
+86,87-21-SBMS-10-Dec-2022(Spring Cloud)::-
+***************************************
+1)Register and Discovery Server::-
+->Register:Maintaining the details of the application serviceID.and also communicate one MS# to Onther MS#
+->Register is a storage area for Audit details of all services.
+->Discovery:means find other application serviceID to connect/communication each other.
+->Here,Register store all MicroService application details like ServiceID(ApplicationName),instanceID,IP,Load Factor Details,PORT etc..
+->Load factor=Current Number of request/Maximum Number of Request 
+->Spring Cloud + Netflix provided one 
+Follow My Project in STS: spboot-cloud-eureka-server-byrs
+
+Q)What is Register and Discovery ?How it differ from Tomcat Server?
+Ans: Register:it will store all the MicroService application instance details in ServiceInstance form.
+  1 ServiceInstance = 1 ServiceID + 1 InstanceId + URI(1 HOST + 1 PORT) + 1 Load Factor
+  ServiceId = application-namespace
+  InstanceId=some number/application-name:random value
+  IP/PORT=IP address/PORT Number
+  LF = Load factor
+Discovery: it  will support to get another MicroService application details from Register to communicate with that MicroService application.
+
+=>Register and Discovery server Example: Netflix Eureka Server
+=>WebServer(Tomcat) used to run .war file..
+=>Registera and Discovery server run MicroService application.
+
+88-21-SBMS-10-Dec-2022(Spring Cloud)::-
+******************************************
+MicroServices Communication::-
+-----------------------------
+=>If one MicroService application wants to send request and get response from another MicroService application ,it is called MicroServices Communication.
+=>All MicroService application are internally spring boot Rest Application.So we can use RestTemplate.
+=>But using hardcode of URL of MicroService application is not a good approach.Because IP address may run differ in realtime
+MicroService application  may be created for LoadBalancing..
+
+=>Spring Cloud has provided Client APIs to communicate between two MicroService application..which are::-
+i)DiscoveryClient(Legacy)(manual code)
+ii)LoadBalancerClient
+iii)Feign Client(Open Feign)
+iv)RestTemplate(supports all application including non-java)
+v)WebClient:WebFlix(Reactive coding)
+
+Note:These 3 process are best to hide your IP-address in the URL while communicate,otherwise use RestTemplate.
+
+**DiscoveryClient::-
+Code:spboot-cloud-order-service-byrs->CartServiceConsumerUsingDiscoveryClient.java->OrderRestControllerUsingDiscoveryClient.java
+Dependency:	<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+		</dependency>
+=>This is given by Spring Cloud to fetch details from Register of a given MicroService application based on serviceId(application-name) of client MicroService application.
+=>if MicroService application is running only once,then result is List<SI> with only one Object(index#0)
+=>From index#0,we read ServiceInstance.
+=>1 ServiceInstance = 1 ServiceID + 1 InstanceId + URI(1 HOST + 1 PORT) + 1 Load Factor
+=>then pass the url to RestTemplate to make call Consumer MicroService application and response ResponseEntity<T>
+=>Using DC,To get MicroService application from Eureka at runtime based on MicroService application serviceID
+
+Q)Can DiscoveryClient make request to MicroService application??
+Ans: NO, it always connects to Eureka Server.it is never used to make Http Request/Response to MicroService application.
+
+Q)Can Eureka Server make request to MicroService application??
+Ans: Never,it just store details and provides of MicroService application.
+
+Q)Wha is difference between URI,URL,Query Param,Protocol,ResourcePath?
+Ans:URI = IP + PORT
+	URL = PROTOCOL + URI + ContextPath + ResourcePath
+	Query Param =  http://localhost:9090/api/users?id=101&name=raju&role=dev
+
+89-21-SBMS-10-Dec-2022(Spring Cloud)::-
+******************************************	
+**LoadBalancerClient::-
+Code:spboot-cloud-order-service-byrs->CartServiceConsumerUsingLoadBalancerClient.java->OrderRestControllerUsingLoadBalancerClient.java
+Dependency:	<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-loadbalancer</artifactId>
+		</dependency>
+=>If we run MicroService application multiple times at differnt port then multiple instances are created.
+=>To provide better/faster service to end-consumer, then multiple instances are required.
+=>In above case using DiscoveryClient,if consumer wants to read one instance using DiscoveryClient(which has less load factor)that is not possible,because it returns 
+List<ServiceInstance>(all instance)
+=>LoadBalancerClient(I) will get only one isnatnce from Eureka server that less Load Factor(it internally follows round robin concept)
+Note:If u want run your MicroService application as multiple instances then must provide:eureka.instance.instance-id=-
+
+Q)Why LoabBalancerClient is used?
+Ans:To work with multiple  instances of producer MicroService application.it is also called as Client side Load balancer.
+Q)what is the old LoabBalancer Vendor name?
+Ans:Ribbon:it is removed now
+	New One: Cloud Load Balancer
+	
+Q)How many instnaces does it return for a single request from eureka?
+And Alwaya one ServiceInstance which has less load factor.
+
+Q)Do we need RestTemplate also if we use LoadBalancerClient?
+Ans: Yes, because LoadBalancerClient intercats with Eureka.LoabBalancerClient will not make any HTTP request to Rest/MicroService application.
+
+90-21-SBMS-10-Dec-2022(Spring Cloud)::-
+******************************************	
+**Feign Client(Open Feign)::-
+Code:spboot-cloud-order-service-byrs->CartServiceConsumerUsingfeignClient.java->OrderRestControllerUsingFeignClient.java
+=>Dependency:
+<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-openfeign</artifactId>
+		/dependency>
+<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+		</dependency>		
+=>In main u add annotation is @EnableFeignClients		
+=>Feign Client is also called Open Feign
+=>it is  3rd party API,integrated with spring cloud
+=>it genrates code at runtime(proxy) which internally uses LoabBalancerClient code
+=>programmer has to provde one interface with abstarct method,
+endpoint details:Path,HttpMethod,serviceID
+for request/response we provide Entity
+=>The openfeign dependency also having the LoadBalancer		
+
+91,92-21-SBMS-10-Dec-2022(Spring Cloud)::-
+******************************************	
+*****Config Cloud Config Server*****::--
+-------------------------------------------
+Dependency:
+<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-config-server</artifactId>
+		</dependency>
+=>In main class add annotation is : @EnableConfigServer		
+=>Every MicroService application contains application.properties file which are contains key-value as same as other MicroService application application.properties
+=>Using Config server we can store the common key-value data inside a file and that file we will stored in Github
+=>default port of config server is 8888
+=>WE must specify github url of Config server application in spboot-cloud-config server-byrs application.
+=>also we must provide Config server client dependency and config server URL into Every MicroService application
+Note:if we modify Config Server(.git application.properties) file then it has not reflect in MicroService application so that we need to add 
+one annotation i.e @RefreshScope on the top of  RestController class.so that it will effect all the end-point.
+In parally we need to add Actuator dependency because this is refresh the RefreshScope.after added actuator dependency then hit below request..
+=>PostMapping using Postman:http://win10--dev01:7070/actuator/refresh  then send request in browser: http://win10--dev01:7070/cart/config
+=>Above request u can manually hit or create one MicroService application there using RestTemplate u can hit....i have created one MS application.
+=>ConfigServerConfigDataLoader is given by Spring Cloud Config Client that gets latest key-value from Config Server.
+=>if key-value present in both Local MS application and Config Server(.git) then also priority will be Config Server(.git)
+otherwise u need to take different key for Local MS.
+
+93-21-SBMS-10-Dec-2022(Spring Cloud)::-
+******************************************	
+=>To Monitorize the current status of our MicroService application running...
+using Actuator,using Zipkin and Sleuth ,and using ELK
+
+**Actuator(Admin Server)::-
+---------------
+=>it is Set of Production Ready Endpoint
+=>Actuator gives pre-defined services which are commonly used in Production Environment for MS application like health checking,beans details,mapping inforation(URL,HttpMethods),cache,heap,thread dump..etc
+=>if we use Actuator then that is manual precess of checking services.using Dependency:-
+<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-actuator</artifactId>
+		</dependency>
+->if u want all inclue then use management.endpoints.web.exposure.include=* in application.properties file
+if u use some specified inclue then  u can use management.endpoints.web.exposure.include=health,ban,env   like this
+->if u didn't specify any inclue then default is 'health' is activated in new/current version....But in old 2 include bydefault i.e 'health and info'
+->if i have multiple MS application,then checking one by one not possible so we are going to use Admin Server with GUI
+=>Instead of doing manually,we should integrate Admin Server to have GUI based checking.
+How?means in Every MicroService application i am going to add actuator dependency with Admin Client . and i will create another MS application with different
+port for Monitorize all the MS application include,there i will use ADmin Server so that Admin client talk with Admin Server and Admin Client send the data.
+<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-actuator</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>de.codecentric</groupId>
+			<artifactId>spring-boot-admin-starter-client</artifactId>
+		</dependency>
+**Spring Cloud AdminServer::-
+---------------------------
+=>it is central server is used to Monitor Actuator result of Every MS# which is using Admin Client and Admin URL
+=>MS# will connect admin server using admin client
+=>Actuator must be enabled at evry MS# then only Admin Client can read its information.
+<dependency>
+			<groupId>de.codecentric</groupId>
+			<artifactId>spring-boot-admin-starter-server</artifactId>
+		</dependency>
+http://localhost:7073/applications
+http://localhost:7073/Wallboard
+->In main class add @EnableAdminServer dependency.
+
+94,95-21-SBMS-10-Dec-2022(Spring Cloud)::-
+******************************************	
+**Message Queue::-
+-------------------
+=>The Continious data flow between two system.Producer will send data and consumer will read by using a connector/mediator i.e 'Message Broker'
+=>Client server application works using HTTP protocol.The Client has to make request then server will process it and give response back to  client
+=>But in Message Broker,one time connection producer-consumer is made using Message Broker,then continious data flow is done.COnsumer need not to make 
+request again and again.One time connection is fine.
+=>Use Cases :Delivery Status,Pickup status,live train status(automatically refresh and data update)
+=>Message Query uses TCP protocol to exchange data
+=>MQ are two type::-
+a)Basic MQ(Single Broker-No Load Balancer)  
+Ex:JMS:Jaava Message Service/Apache ActiveMQ/RabbitMQ
+b)Advanced MQ(Multi Broker - LoabBalancer)
+Ex:Apache kafka
+Q)What is MOM(Message oriented Middleware)?
+Ans:it is a software like ActiveMQ(Single Broker),Apache Kafka(Multi-Broker).MOM helps to connect one system to other system.MOM is a software contains memory holds producer message
+and sent to consumer
+
+::-Peer-To-Peer Communication::-
+------------------------------
+=>Producer Send message to MOM then MOM software will store that message in MOM destination having some name called 'Queue' and also send that message 
+to Consumer.SO the communication between one sender to one consumer called Peer-To-Peer Communication.
+so here 1 sender - 1 Queue - 1 Consumer and 2 sender - 2 Queue - 2 Consumer.Here every Queue has different different name.
+=>here destination type is :Queue
+Ex:Pickup link,Whatsapp one to one communication
+
+::-PUB-SUB Communication::-
+--------------------------
+=>Producer Send message to MOM then MOM software will store that message in MOM destination is Topic.Here Topic will clone that message 
+and send that message to Multiple Consumer.SO the communication between one sender to multiple consumer called PUB-SUB Communication.
+so here 1 sender - 1 Topic - Multiple Consumer and 2 sender - 2 Queue - 2 Consumer.Here every Queue has different different name.
+=>here destination type is :Topic
+Ex:Live Cricket score,Whatsapp Group communication
+
+Q)How Producer and Consumer communicate each other?
+Ans: Both Producer and Consumer systems are connected using one common destination only i.e destination name given at consumer must watch destination
+name given at producer.
+=>There is no direct connection is created between producer and consumer i.e NO IP/PORT details shared.
+Note:There are multiple Topic,Queue.INreal-time we are use PUB-SUB
+
+***Configure Apache-ActiveMQ with peer-to-peer communication****
+------------------------------------------------------
+=>For HTTP protocol,to see the web console(Monitor Tool)
+=>Go to this location C:\apache-activemq-5.17.1\bin\win64 and double click/start 'activemq.bat'
+use port:http://localhost:8161
+after start use ID:admmin,password:admin
+Dependency:
+<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-activemq</artifactId>
+		</dependency>
+Code:spboot-cloud-activemq-p2p-producer-byrs->ProducerService.java->TestProducerServiceRunner.java
+	spboot-cloud-activemq-p2p-consumer-byrs->ConsumerService.java
+
+Note:In Consumer main class u need to add annotation "@EnableJms"
+
+97-21-SBMS-10-Dec-2022(Spring Cloud)::-
+******************************************
+98-21-SBMS-10-Dec-2022(Spring Cloud)::-
+******************************************
+***Configure Apache-ActiveMQ with PUB-SUB communication****
+-------------------------------------
+Q)Difference between P2P and PUB-SUB?
+Ans:In P2P,if producer start sending message while consumer in stop mode.In this case all producer message will single copy is persisted at MOM
+destination.when Consumer is up then all message are delivered including old message also.Here message will delivered even consumer is stopped.
+=>But in PUB-SUB,if producer start sending message while consumer in stop mode.when Consumer is up then it will be receive only updated/current message not old message.
+	because message not delivered here.
+note:Message Enqueued means number of message entered into queue(Producer send)
+	Message Dnqueued means number of message out from queue(Consumer consume)
+
+Q)Does ActiveMQ support LoadBalancing?what if MOM s/w down?
+Ans:ActiveMQ come with one instance(No LoadBalance).if it is down then data lose may occure.
+	
+Code:spboot-cloud-activemq-pubsub-producer-byrs->ProducerService.java->TestProducerServiceRunner.java
+	spboot-cloud-activemq-pubsub-consumer-byrs->ConsumerService.java
+
+99-21-SBMS-10-Dec-2022(Spring Cloud)::-
+******************************************
+**Apache Kafka(Multi-Broker)***
+-----------------------------
+=>it  is open source API used to connect multiple application to send data(Message Queue)
+=>it support Multi-Broker concept(multiple cluster) to send data to multiple customer.
+=>it supports Load Balancer using multiple cluster.
+=>Kafka supports PUB-SUB model only,No P2P
+=>Kafka s/w is called as EcoSystem.This system contains mainly 3 parts.They are:
+i)Zoo Kepper :Control entire system(how many brokers are assigned,how many busy,currently which topics is reading,
+increase cluster size,allocate a broker to consumer,how many cloned copies are given,..etc)
+ii)kafka Cluster :Group of Message Broker(old version:minimum 3,new version:minimum 1)
+iii)Topics:Memory that stores data in partitions.
+=>Data is exchanged in Serialized format(String/JSON/Data)
+=>Producer and Consumer both are connected using Topic name.
+=>By using KafkaTemplate<K,V> producer Application Will send data to kafka.
+K = TopicName and V = Data and @KafkaListener(K) is used to read data at Consumer application.
+=>Topic is a memory that holds data in packets formats[data blocks].Those are identified ny using index number starts from zero[offset]
+=>Message Replica: it creates cloned copies of actaul data to send it to consumer.
+
+***Configure Apache Kafka and start through Console based****
+-------------------------------------------------------
+Kafka Start process: To start kafka, we need to start Zookeeper then start Kafka server.
+Step1)To start Zookeeper from command line run below command:-
+C:\kafka_2.13-3.5.0>bin\windows\zookeeper-server-start.bat .\config\zookeeper.properties
+after run the command, for comfirmation see the result:[2023-09-15 10:39:45,888] INFO binding to port 0.0.0.0/0.0.0.0:2181 (org.apache.zookeeper.server.NIOServerCnxnFactory)
+
+Step2)Then Start the kafka server in different command prompt..use below command
+C:\kafka_2.13-3.5.0>bin\windows\kafka-server-start.bat config\server.properties
+after run the command, for comfirmation see the result:[2023-09-15 10:45:30,447] INFO Awaiting socket connections on 0.0.0.0:9092. (kafka.network.DataPlaneAcceptor)
+
+Step3)Create a topic to store the events/messages/data...for creating use below command
+C:\kafka_2.13-3.5.0>bin\windows\kafka-topics.bat --create --topic myabc --bootstrap-server localhost:9092
+after run the command, for comfirmation see the result:Created topic user-topic.
+
+Step4)start produce and push message into created topic...using below command
+C:\kafka_2.13-3.5.0>bin\windows\kafka-console-producer.bat --topic myabc --bootstrap-server localhost:9092
+After run the command result:
+>hi
+>my name is niranjana
+
+Step5)start consume and read the message from created topic...using below command
+C:\kafka_2.13-3.5.0>bin\windows\kafka-console-consumer.bat --topic myabc --bootstrap-server localhost:9092  (it will get current/updated data)
+NOTE:To get producers old data/message so that when consumer will start he get new and old data for this use below command::-
+C:\kafka_2.13-3.5.0>bin\windows\kafka-console-consumer.bat --topic myabc --from-beginning --bootstrap-server localhost:9092(it will get old data + current/updated data)
+After run the command result:
+hi
+my name is niranjana
+
+Step6)After created topic and inserted message inside topic then see how many partition internally created by zookeeper 
+the data/message are in which partition and its names and index(all are take care by zookeeper only)..for this use below command..
+NOTE:Number of topic and number of partition create inside the Topic is deveoper hand but in which partition what kind od data ,how many data these thing decided by Zookeeper only.
+C:\kafka_2.13-3.5.0>bin\windows\kafka-topics.bat --bootstrap-server localhost:9092 --describe --topic location-update-topic
+
+Step7)list out all topic names
+C:\kafka_2.13-3.5.0>bin\windows\kafka-topics.bat --bootstrap-server localhost:9092 --list
+
+Note:Ctrl+c (for exit)
+=>The order of stop the server:consumer>producer>kafka server>Zoo Keeper
+
+100,101-21-SBMS-11-Jan-2023(Spring Cloud)::-
+******************************************
+***Configure Apache Kafka and start through GUI based****
+-------------------------------------------------------
+=>Entire apache kafka is called Kafka-ecosystem
+=>major 3 things:Zookeeper, kafka cluster,Topic
+=>Kafka cluster is the set of Message Broker.
+=>Message Broker responsibility is read one topic given by producer and clone it by usng message replica and deliver to Consumer in DE-Serialized format.
+K-TopicName
+V-Data
+Explain:Producer send data as k-v format to consumer in Serialized format by using KafkaTemplate(K,V).Then Zookeeper handle the messagea nd handover to Topic.
+then Message Broker responsibility is read one topic given by producer and clone it by usng message replica and deliver to Consumer in DE-Serialized format.
+the consumer read the De-serialized data comming from message broker and receive topics and groupId using @KafkaListener
+=>kafka accept only serialized data for partition.partitions are there inside the Topics.Partitions store the large quantity of data into as part part.
+=>Partitions contains index number [offset]
+=>Create a topic to store the events/messages/data...for create use below command
+C:\kafka_2.13-3.5.0>bin\windows\kafka-topics.bat --create --topic user-topic --partitions 10 --replication-factor 1 --bootstrap-server localhost:9092
+
+Code:spboot-cloud-kafka-producer-byrs->ProducerService.java->TestProducerServiceRunner.java
+	spboot-cloud-kafka-consumer-byrs->ConsumerService.java
+
+=>In kafka,default value of partitions and replicas One(1)
+=>kafkaTemplate creates given topic name on the fly(at runtime)
+
+Q)What does mean by Group in Kafka?
+Ans: Logical unit of multiple consumers whichh are using same topicName.In this case MessageBroker informs MessagReplica to create Cloned Copies.
+Ex: group=abc, consumer=5, topicName=TEST-A then MessageBroker-5 is allocated,MR-5 copies of actual message from TEST-A.
+
+102-21-SBMS-11-Jan-2023(Spring Cloud)::-
+******************************************
+**JACKSON API(Open source Java API)::-
+-----------------------------------------
+=>This API helps to convert our java object to JSON format and alos convert JSON to java object.
+=>when u add "web Dependency" then it will come automatically.
+=>JACKSON API has one pre-defined class i.e ObjectMapper(C).
+=>ObjectMapper(C) has 2 methods i.e writeValueAsString(javaObjectHere): which helps to Convert java object to json and
+						another is readValue(jsonObject,object's class-name.class): which helps to convert json object to java object.
+=>In Spring Boot,@ResponseBody has internally use JASKSON API to convert Java object to JSON.
+		
+Code:spboot-cloud-kafka-producer-byrs->JsonUtil.java		
+
+103,104-21-SBMS-11-Jan-2023(Spring Cloud)::-
+******************************************
+==============================
+****SPRING CLOUD API GATEWAY***
+============================
+=>it is Single entry and exit point of MicroService application.
+=>There may be multiple MicroService application running as multiple instnaces.
+=>All these details are stored in Eureka Server
+=>Eureka server is a Register(store data).it never makes any HTTP call to any MicroService application
+=>we can't expose all MicroService application IP-address and ports to client machine/application.
+we should give only one IP and PORT i.e Gateway IP and PORT.
+=>it has LoadBalancer.
+Note:Gateway also one type MicroService application,It needs to be register with Eureka.It uses Proxy client(Feign) generated at Gateway,to make call to MS#
+
+Q)Why we use Gateway?
+I)Routing: Dispatchiing a client request to MicroService application.Router is a pre-defined component that taking Routing table data.
+Routing table must be configured by Programmer.
+Routing Table = PATH + URI(serviceId/IP:PORT/HOSTNAME)
+ii)LoadBalancing: Choose one instance from Eureka based on Less LoadFactor for every request.(Round Robin)
+iii)Filters:Modify Request/Response Details(Encryption,Authentication,Security clncept)
+
+::Gateway Execution flowa::-
+i)Get Request from client.
+ii)Ruter reads request
+iii)Request goes routing table Compare URL with path
+iv)Get MicroService application ServiceId and goes to Eureka to fetch MicroService application data
+v)Return ServiceInstance from Eureka
+vi)Generates Proxy Client(feign Client)
+vii)Pre-Filter is executed if exist(modify request)
+viii)Execute RestController methods based on Path
+ix)Return response Entity and Post Filter called
+x)Response is Returned from Gateway
+xi)Response given back to client.
+
+=>Spring Cloud API Gateway Routing(or Config) can be defined in two ways::-
+i)YAML/Properties file
+ii)Java based Config
+
+<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-gateway</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+</dependency>
+<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-config</artifactId>
+</dependency>
+@Configuration
+public class AllServicesGatewayConfig 
+{
+	@Bean
+	public RouteLocator myOwnConfigRoutes(RouteLocatorBuilder builder)
+	{
+		return builder.routes()
+				.route("cartRoutingId",r->r.path("/cart/**").uri("lb://CART-SERVICE"))
+				.route("orderRoutingId",r->r.path("/order/**").uri("lb://ORDER-SERVICE"))
+				.build();
+	}
+
+}
+//using lb://CART-SERVICE for mutliple instnace.because if u have multiple instance then it will fetch the lowest LB(load balancer)..
+//otherwise u can use like this http://172.10.12.35:900 if u have only one instance.		
+
+105-21-SBMS-11-Jan-2023(Spring Cloud)::-
+******************************************
+****SPRING CLOUD API GATEWAY***
+============================
+**Filters::-
+-------------
+=>
+
+
+106-21-SBMS-11-Jan-2023(Spring Cloud)::-
+******************************************
+**Distributed Tracing(Sleuth and Zipkin]**
+------------------------------------------
+=>Distributed Tracing concept is used to find out no. of MicroService application called,Execution Path(method->Method),
+Time taken for exact service and all services.
+=>It is type of debugging(Flow Debug)
+=>Spring cloud API has given:Sleuth and Zipkin to handle "Distributed Tracing".
+=>One MicroService application calls another MicroService application likewise repeating then who will monitor the logs,execution path?Ans: Sleuth
+=>Sleuth:It Generates details like Tracing Info/Execution Path/Execution Time/how many request processed/how much time taken.
+=>Zipkin Server:It will store and display the Sleuth result.
+
+=>To download the Zipkin :https://repo1.maven.org/maven2/io/zipkin/java/zipkin-server/2.12.9/
+then Download:zipkin-server-2.12.9-exec.jar 
+then run : C:\Users\Sreenivas Bandaru\Downloads>java -jar zipkin-server-2.12.9-exec.jar
+then enter url in browser:http://127.0.0.1:9411/zipkin/
+
+107-21-SBMS-11-Jan-2023(Spring Cloud)::-
+******************************************
+**Distributed Tracing(Sleuth and Zipkin]**
+------------------------------------------
+=>In every microservices we need to add only one dependency i.e Zipkin from starter then add Sleuth manually from maven repo..
+<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-sleuth-zipkin</artifactId>
+</dependency>
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-starter-sleuth</artifactId>
+</dependency>
+=>Simply add this two annotation in every MicroService application and hit the url:http://127.0.0.1:9411/zipkin/
+=>Zipkin and Sleuth store data using Logs and format look like [ServiceName,TraceId,,Depth,Total Spans,spanId,ExportFlag]
+TraceId:ID generated for one entire request flow
+spanId:Id generated for one MicroService application request flow.
+Total Spans: it will show how many endpoints executed..
+Depth:it will show how many services executed..
+Services: it will show how many services internally running (major)....
+
+108to111-21-SBMS-27-Jan-2023(Spring Cloud)::-
+******************************************
+**Reactive Program(WebFlux,MongoDB,WebClient)
+
+112-21-SBMS-27-Jan-2023(Spring Cloud)::-
+******************************************
+***JAAS:Java Authentication and Authorization (Security)
+--------------------------------------------------------
+Authentication::-Validating User Login details:username,password
+Authorization:-Validating User Role to access a service/resources
+
+Authorization has 3 level::
+i)permitAll: A URL/Path can be accessed by every one..Ex:/home,/login/contactUs,/aboutUs
+ii)Authenticated:A URL/Path can be accessed after login by any role is valid..Ex:/Login,/LogOut,/ChanePassword,
+iii)hasAuthority:Valid Role required
+
+Authentication has 3 Level::
+i)InMemoryAuthentication(Users Data store in DAM/Temp Memory,For Testing purpose use,not recommended for production)
+ii)JDBCAuthentication(Users data and role store in Database .here we manually write SQL Queries.)
+iii)ORMAuthentication/userDetailsService(here ORM means we use Data Jpa,No SQL Query.it store data in database and convert into object format)
+
+Note:Don't store password as Text format inside database ,better to use PasswordEncoder.
+
+113-21-SBMS-27-Jan-2023(Spring Cloud)::-
+******************************************
+**InMemoryAuthentication:::-
+------------------------------
+=>Spring Security has given code for:below 3 so that we didnot write..
+i)User Validation on Login
+ii)Session Management
+iii)Session Invation and Logout logic
+Code:spboot2.x-spboot2.x-security-InMemoryAuth-usingUserDetailsService-without-WSCA-byrs
+
+114-21-SBMS-27-Jan-2023(Spring Cloud)::-
+******************************************
+**JDBCAuthentication:::-
+--------------------------
+<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-security</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-jdbc</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-thymeleaf</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.mysql</groupId>
+			<artifactId>mysql-connector-j</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+create table users(username varchar(50) not null primary key,password varchar(500) not null,enabled boolean not null);
+create table authorities (username varchar(50) not null,authority varchar(50) not null,constraint fk_authorities_users foreign key(username) references users(username));
+create unique index ix_auth_username on authorities (username,authority);
+Code:spboot2.x-spboot2.x-security-JDBCAuth-usingUserDetailsService-withoutWSCA-byrs
+
+
+115-21-SBMS-27-Jan-2023(Spring Cloud)::-
+******************************************
+**ORMAuthentication/userDetailsService:::-
+---------------------------------------
+Here we have 3 Major Stages..
+Stage 1)Application Setup and User Register
+Stage 2)User Login and Password Encoder
+Stage 3)Session Management and Internal Process
+
+=>In this stage we define spring boot web mvc application like CRUD process that reads register Form data and stores in two table i.e User table and Roles table;
+=>For this we need to define User Entity with Repository,Service and control..
+
+116-21-SBMS-27-Jan-2023(Spring Cloud)::-
+******************************************
+**ORMAuthentication/userDetailsService:::-
+---------------------------------------
+Stage 2)User Login and Password Encoder
+=>Developer User data stored into database table i.e usertab and rolestab.Here i am using User as Entity class with DataJpa
+=>But Spring Security needs developer User entity class object from Pre-dfefined Custom UserDetailsService's implementaion class.
+=>here UserDetailsService(I) is a pre-defined interface having one method loadUserbyUsername(String uname)that converts Entity class user object to spring 
+User Object.
+=>In Stage 3 we need to configure::
+i)PasswordEncoder
+ii)UserDetailsService impl class object
+iii)AuthenticationManager(for validation of username and password)
+iv)Configure DaoAuthManager (using PasswordEncoder and UserDetailsService)
+
+=>for above configure,add security dependency in pom.xml 
+<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-security</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.thymeleaf.extras</groupId>
+			<artifactId>thymeleaf-extras-springsecurity5</artifactId>
+</dependency>
+
+Code:spboot2.x-security-OrmAuth-usingUserDetailsService-withoutWSCA-byrs
+=>configure one Bean for Password Encoder
+
+Q)What is Authority in spring Security?
+Ans:Developer call roles in application but spring security storing them as Authority type internally String only.
+Ex:ADMIN,CUSTOMER...etc
+
+Q)What is GrantedAuthority?
+Ans:Roles allocated to one user is called GrantedAuthority as List.what are the roles allocated to a perticular user called GrantedAuthority.
+=>GrantedAuthority(I) is an interfacea nd its implementaion class is SimpleGrantedAuthority(C)
+
+Q)What is use of AuthenticationManager?
+Ans it will check the username and password is vald or not.
+
+Q)what is the use of authenticationProvider?
+Ans:An AuthenticationProvider implementation that retrieves user details from a UserDetailsService.
+
+117-21-SBMS-27-Jan-2023(Spring Cloud)::-
+******************************************
+**ORMAuthentication/userDetailsService:::-
+---------------------------------------
+Stage 3)Session Management and Internal Process::-
+HttpSession::-Once a user Login is successful then server create one session per client/user that store user data.
+=>This is an object stores user data for period of time(Login to Logout).Ex:userId,roles..etc
+Note:If 1000 user request come then server will create 1000 session object to store data which is very headache to server processing.Because data is process in server..
+so without storing data in server side by creating Session object ...Use Stateless(data will not stored in server side) i.e Restcall using JWT Token
+
+
+118-21-SBMS-27-Jan-2023(Spring Cloud)::-
+******************************************
+**JWT Authentication:::-
+---------------------------------------
+***Json Web Token based Authentication::-
+=>Server Generates one token after validating user login details by using one security Hashing Algorithm ans Secret Key.
+=>Once a token is generated then it will be sent to client using response.Client application has to store the token data.
+=>Server will never store any user data,no session,no token
+=>when wants to make request then it has to send token along with request.
+=>Server validates token using secret key.if valid then will provide response else redirect to login page
+
+**JWT::-JSON Web Token is  used to implement Token based Authentication
+=>JJWT is open source API used by java application to generate,validate,read/parse(describe) tokens.
+<!-- https://mvnrepository.com/artifact/io.jsonwebtoken/jjwt -->
+<dependency>
+    <groupId>io.jsonwebtoken</groupId>
+    <artifactId>jjwt</artifactId>
+    <version>0.9.1</version>
+</dependency>
+<dependency>
+			<groupId>javax.xml.bind</groupId>
+			<artifactId>jaxb-api</artifactId>
+			<version>2.3.1</version>
+		</dependency>
+Code:simple-maven-jwt-tokengenerate-byrs
+		
+here jaxb-api dependency used for to convert java object to XML and Vice-versa
+->marshalling (converting Java objects to XML) and unmarshalling (converting XML to Java objects).
+Note:JAXB is no longer part of the Java SE standard library starting from Java 9.Use alternatives like Jackson, JAXB successor Jakarta XML Binding (Jakarta XML Binding)		
+
+=>Jwt token has 3 parts::-
+i)Head: Header store data as Key-Value pair.Here Header will provide Token Algorithm type,Token Provider name,Token version
+ii)Payload: Payload provide Token id,token subject(username),token creation date,token expire date,token provider,token security algorithm
+iii)Signature:here signature is the combination of Head + Payload.it has Encoded Hedaer and Encoded Payload with Secret.
+=>Always Signature is validated at server using Secret.
+
+119,120-21-SBMS-27-Jan-2023(Spring Cloud)::-
+******************************************
+**JWT Authentication:::-
+---------------------------------------
+=>AuthenticationEntryPoint helps to protect invalid user.if any invalid user come then it will display some messages like UNAUTHORIZED, "authentication failed"
+=>To generate token and validate the token i am creating JwtUtil class... 
+
+**Filter:-
+=>In general,Filters are used to execute PRE/POST processing logic for a servlet.
+=>We need to define one Filter that used execute for every request using doFilterInternal() method of OncePerRequestFilter(C) 
+i)Read Authorization Header(Read Token)
+ii)Validate Token by using JwtUtil
+iii)Read Subject/username
+iv)Validate Username by loading userdata from db
+v)create UsernamePasswordAuthentication
+vi)Link to current request and SecurityContext
+
+Q)What is Principal in spring security?
+Ans Principal(I) is a interface given by Sun/Oracle for Security Contract.If any f/w implement this then tyey will be store current user details inside 
+Principal(I) impl class i.e UsernamePasswordAuthenticationToken(C) as username only.
+
+Code:spboot2.x-security-JwtAuth-usingUserDetailsService-withoutWSCA-byrs
+
+121,122-21-SBMS-27-Jan-2023(Spring Cloud)::-
+******************************************
+**OAuth2 Authentication:::-
+---------------------------------------
+
+->Go to https://developers.facebook.com/ then select My Apps then selec "Other" then select "consumer" then enter application some name "BMS-NEW-A"
+then click "create app" then enter your facebook password.Now application will be created.Then Click App name(Top left corner) 
+then create test app "BMS-NEW-A - Test1"(automatically create)then finish.
+=>Then go to Settings->basic then copy client-id:893323202213639 and secret id:d9a6824e48218a9fab69160f6235284d
+=>use this client-id and secret-id in application.yml file
+
+123-21-SBMS-27-Jan-2023(Spring Cloud)::-
+******************************************
+SOLID PRINCIPLE::-
+========================
+=>
+
+124-21-SBMS-27-Jan-2023(Spring Cloud)::-
+******************************************
+**CircuitBreaker Configuration ::-
+----------------------------------
+==>
+
+niranjanacharty1@gmail.com
+password-Niranjana@#$%2024
+username-ChNira2024
+
+config-server:8888
+eureka-server:8761
+admin-server:7073
+cart-service:7070
+order-service:7071
+gateway-service:7074/80
+scheduler-service:7072
+
+InMemory-2626
+JdbcAuth-2627
+OrmAuth-2628
+JwtAuth-2629
+
+aaee----kacho chudi 10gm--->67000/-,rupa paunchi---5000/-
+Gege maaa---mudi-32500/-
+
+
+kanoro----1 tula,1/2 tula
+	
+mama-nanu,mudi 1/2 tula,	rani haro----4gm-26000,27gm-180000 ,mangalasutra:1 tula,mothamoni-1/2 tula
+
+mudi-2ta-1 tula
+chain-1.5 tula
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Praveen0065
