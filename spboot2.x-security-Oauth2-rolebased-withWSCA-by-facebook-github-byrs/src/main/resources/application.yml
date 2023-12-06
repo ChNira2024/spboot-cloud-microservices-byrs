@@ -19,3 +19,22 @@ spring:
             
 server:
   port: 1320
+  
+#For Auth developer.fb.com
+#AppName: BMS-NEW-A
+#ClientID:893323202213639
+#SecretID:d9a6824e48218a9fab69160f6235284d
+#Email:chartyniranjana2016@gmail.com
+
+#For Auth,cloud.google.com
+#AppName: BMS-NEW-A
+#ClientID:145344180378-g5d3ncjjpaf5a4212egdqgk2atol9f3j.apps.googleusercontent.com
+#SecretID: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
+#Email:niranjana.charty2013@gmail.com
+#redirect_uri=http://localhost:8081/oauth2/callback/google
+
+#For Auth developer.github.com(niranjanaC2023/niranjanacharty@gmail)
+#AppName: BMS-NEW-A
+#ClientID:4cc68361cfba7e6d4778
+#SecretID:3a4deb13cd893e1ae08250946cea0c32b061f01d
+#Email:niranjanacharty@gmail.com  

@@ -1,0 +1,39 @@
+config-server:8888
+eureka-server:8761
+admin-server:7073
+cart-service:7070
+order-service:7071
+gateway-service:7074/80
+scheduler-service:7072
+security-service:9898
+
+=>To download the Zipkin :https://repo1.maven.org/maven2/io/zipkin/java/zipkin-server/2.12.9/
+then Download:zipkin-server-2.12.9-exec.jar 
+then run : C:\Users\Sreenivas Bandaru\Downloads>java -jar zipkin-server-2.12.9-exec.jar
+then enter url in browser:http://127.0.0.1:9411/zipkin/
+
+CART-SERVICE
+=============
+GET:http://win10--dev01:7070/cart/wish
+GET:http://win10--dev01:7070/cart/config
+GET:http://win10--dev01:7070/cart/find/101
+POST:http://localhost:7070/cart/create
+
+ORDER-SERVICE
+==============
+GET:http://win10--dev01:7071/order/place
+GET:http://win10--dev01:7071/order/config
+POST:http://win10--dev01:7071/order/fetch/101
+POST:http://localhost:7071/order/addToCart
+
+API-GATEWAY
+=============
+GET:http://localhost:80/cart/wish
+GET:http://localhost:80/cart/config
+http://localhost:80/cart/find/101
+POST:http://localhost:80/cart/create
+GET:http://localhost:80/order/place
+GET:http://localhost:80/order/config
+POST:http://localhost:80/order/fetch/101
+POST:http://localhost:80/order/addToCart
+
